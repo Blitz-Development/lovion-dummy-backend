@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://www.loviondummy.nl/workorders"
+           xmlns:tns="http://www.loviondummy.nl/workorders"
+           elementFormDefault="qualified">
+
+    <xs:element name="GetWorkOrdersRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="status" type="xs:string" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="GetWorkOrdersResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="workOrder" type="tns:WorkOrderType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="GetWorkOrderDetailsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="externalWorkOrderId" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="GetWorkOrderDetailsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="workOrder" type="tns:WorkOrderType" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="WorkOrderType">
+        <xs:sequence>
+            <xs:element name="externalWorkOrderId" type="xs:string"/>
+            <xs:element name="externalAssetRef" type="xs:string"/>
+            <xs:element name="description" type="xs:string" minOccurs="0"/>
+            <xs:element name="scheduledDate" type="xs:date" minOccurs="0"/>
+            <xs:element name="workType" type="xs:string"/>
+            <xs:element name="priority" type="xs:string"/>
+            <xs:element name="status" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+
