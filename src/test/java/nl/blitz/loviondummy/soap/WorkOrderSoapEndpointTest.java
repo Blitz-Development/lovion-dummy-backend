@@ -1,48 +1,60 @@
 package nl.blitz.loviondummy.soap;
 
-import static org.springframework.ws.test.server.RequestCreators.withPayload;
-import static org.springframework.ws.test.server.ResponseMatchers.xpath;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import nl.blitz.loviondummy.config.WsConfig;
-import org.junit.jupiter.api.BeforeEach;
+import java.time.LocalDate;
+import java.util.List;
+import nl.blitz.loviondummy.domain.Asset;
+import nl.blitz.loviondummy.domain.WorkOrder;
+import nl.blitz.loviondummy.service.WorkOrderQueryService;
+import nl.blitz.loviondummy.soap.schema.GetWorkOrdersRequest;
+import nl.blitz.loviondummy.soap.schema.GetWorkOrdersResponse;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.ws.test.server.MockWebServiceClient;
 
-@SpringBootTest
 class WorkOrderSoapEndpointTest {
-
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    private MockWebServiceClient client;
-
-    @BeforeEach
-    void setup() {
-        client = MockWebServiceClient.createClient(applicationContext);
-    }
 
     @Test
     void getWorkOrdersReturnsAtLeastOneOrder() {
-        Source requestPayload = new StreamSource(
-                """
-                        <GetWorkOrdersRequest xmlns="http://www.loviondummy.nl/workorders">
-                        </GetWorkOrdersRequest>
-                        """);
+        WorkOrderSoapEndpoint endpoint = new WorkOrderSoapEndpoint(new StubWorkOrderService());
+        GetWorkOrdersRequest request = new GetWorkOrdersRequest();
 
-        client.sendRequest(withPayload(requestPayload))
-                .andExpect(xpath("//w:workOrder", namespace()).exists());
+        GetWorkOrdersResponse response = endpoint.getWorkOrders(request);
+
+        assertThat(response.getWorkOrders()).hasSize(1);
+        assertThat(response.getWorkOrders().get(0).getExternalWorkOrderId()).isEqualTo("WO-STUB");
     }
 
-    private static org.springframework.xml.namespace.SimpleNamespaceContext namespace() {
-        org.springframework.xml.namespace.SimpleNamespaceContext context =
-                new org.springframework.xml.namespace.SimpleNamespaceContext();
-        context.bindNamespaceUri("w", WsConfig.NAMESPACE_URI);
-        return context;
+    private static class StubWorkOrderService implements WorkOrderQueryService {
+
+        private final List<WorkOrder> workOrders;
+
+        StubWorkOrderService() {
+            Asset asset = new Asset();
+            asset.setExternalAssetRef("EXT-STUB");
+            WorkOrder workOrder = new WorkOrder();
+            workOrder.setExternalWorkOrderId("WO-STUB");
+            workOrder.setAsset(asset);
+            workOrder.setWorkType("INSPECTION");
+            workOrder.setPriority("HIGH");
+            workOrder.setStatus("NEW");
+            workOrder.setScheduledDate(LocalDate.now());
+            this.workOrders = List.of(workOrder);
+        }
+
+        @Override
+        public List<WorkOrder> getWorkOrders(String status, Long assetId) {
+            return workOrders;
+        }
+
+        @Override
+        public WorkOrder getWorkOrder(Long id) {
+            return workOrders.get(0);
+        }
+
+        @Override
+        public WorkOrder getByExternalId(String externalWorkOrderId) {
+            return workOrders.get(0);
+        }
     }
 }
 

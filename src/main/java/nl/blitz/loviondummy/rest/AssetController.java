@@ -4,7 +4,7 @@ import java.util.List;
 import nl.blitz.loviondummy.domain.Asset;
 import nl.blitz.loviondummy.dto.AssetDto;
 import nl.blitz.loviondummy.dto.DtoMapper;
-import nl.blitz.loviondummy.service.AssetService;
+import nl.blitz.loviondummy.service.AssetQueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +19,9 @@ public class AssetController {
 
     private static final Logger log = LoggerFactory.getLogger(AssetController.class);
 
-    private final AssetService assetService;
+    private final AssetQueryService assetService;
 
-    public AssetController(AssetService assetService) {
+    public AssetController(AssetQueryService assetService) {
         this.assetService = assetService;
     }
 

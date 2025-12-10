@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-public class AssetService {
+public class AssetService implements AssetQueryService {
 
     private static final Logger log = LoggerFactory.getLogger(AssetService.class);
 

@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-public class WorkOrderService {
+public class WorkOrderService implements WorkOrderQueryService {
 
     private static final Logger log = LoggerFactory.getLogger(WorkOrderService.class);
 

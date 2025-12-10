@@ -4,7 +4,7 @@ import java.util.List;
 import nl.blitz.loviondummy.domain.WorkOrder;
 import nl.blitz.loviondummy.dto.DtoMapper;
 import nl.blitz.loviondummy.dto.WorkOrderDto;
-import nl.blitz.loviondummy.service.WorkOrderService;
+import nl.blitz.loviondummy.service.WorkOrderQueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +20,9 @@ public class WorkOrderController {
 
     private static final Logger log = LoggerFactory.getLogger(WorkOrderController.class);
 
-    private final WorkOrderService workOrderService;
+    private final WorkOrderQueryService workOrderService;
 
-    public WorkOrderController(WorkOrderService workOrderService) {
+    public WorkOrderController(WorkOrderQueryService workOrderService) {
         this.workOrderService = workOrderService;
     }
 

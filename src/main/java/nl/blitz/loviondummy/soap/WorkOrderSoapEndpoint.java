@@ -4,7 +4,7 @@ import java.util.List;
 import nl.blitz.loviondummy.config.WsConfig;
 import nl.blitz.loviondummy.domain.WorkOrder;
 import nl.blitz.loviondummy.exception.ResourceNotFoundException;
-import nl.blitz.loviondummy.service.WorkOrderService;
+import nl.blitz.loviondummy.service.WorkOrderQueryService;
 import nl.blitz.loviondummy.soap.schema.GetWorkOrderDetailsRequest;
 import nl.blitz.loviondummy.soap.schema.GetWorkOrderDetailsResponse;
 import nl.blitz.loviondummy.soap.schema.GetWorkOrdersRequest;
@@ -23,9 +23,9 @@ public class WorkOrderSoapEndpoint {
     private static final Logger log = LoggerFactory.getLogger(WorkOrderSoapEndpoint.class);
     private static final String NAMESPACE_URI = WsConfig.NAMESPACE_URI;
 
-    private final WorkOrderService workOrderService;
+    private final WorkOrderQueryService workOrderService;
 
-    public WorkOrderSoapEndpoint(WorkOrderService workOrderService) {
+    public WorkOrderSoapEndpoint(WorkOrderQueryService workOrderService) {
         this.workOrderService = workOrderService;
     }
 
