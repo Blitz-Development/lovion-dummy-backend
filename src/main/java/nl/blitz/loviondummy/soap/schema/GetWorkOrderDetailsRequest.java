@@ -2,6 +2,7 @@ package nl.blitz.loviondummy.soap.schema;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
@@ -10,6 +11,7 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "GetWorkOrderDetailsRequest", namespace = "http://www.loviondummy.nl/workorders")
 public class GetWorkOrderDetailsRequest {
 
+    @XmlElement(namespace = "http://www.loviondummy.nl/workorders")
     private String externalWorkOrderId;
 
     public String getExternalWorkOrderId() {
