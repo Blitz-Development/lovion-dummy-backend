@@ -17,6 +17,7 @@ import nl.blitz.loviondummy.soap.schema.GetWorkOrderDetailsResponse;
 import nl.blitz.loviondummy.soap.schema.GetWorkOrdersRequest;
 import nl.blitz.loviondummy.soap.schema.GetWorkOrdersResponse;
 import nl.blitz.loviondummy.soap.schema.WorkOrderType;
+import nl.blitz.loviondummy.soap.SoapExceptionResolver;
 
 @EnableWs
 @Configuration
@@ -57,6 +58,11 @@ public class WsConfig extends WsConfigurerAdapter {
                 GetWorkOrderDetailsResponse.class,
                 WorkOrderType.class);
         return marshaller;
+    }
+
+    @Bean
+    public SoapExceptionResolver exceptionResolver() {
+        return new SoapExceptionResolver();
     }
 }
 

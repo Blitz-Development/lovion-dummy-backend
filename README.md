@@ -33,3 +33,4 @@ XSD bevindt zich in `src/main/resources/wsdl/workorders.xsd`. WSDL is bereikbaar
 ## Tests
 Eenvoudige integratietests voor REST en SOAP zijn aanwezig en draaien mee met `mvn test`.
 
+

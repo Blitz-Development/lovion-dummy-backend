@@ -12,3 +12,4 @@ public interface AssetQueryService {
     List<WorkOrder> getWorkOrdersForAsset(Long assetId);
 }
 
+

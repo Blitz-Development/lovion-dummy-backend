@@ -59,8 +59,11 @@ public class WorkOrderSoapEndpoint {
     private WorkOrderType mapToType(WorkOrder workOrder) {
         WorkOrderType type = new WorkOrderType();
         type.setExternalWorkOrderId(workOrder.getExternalWorkOrderId());
+        // externalAssetRef is required in XSD, so always set a value
         if (workOrder.getAsset() != null) {
             type.setExternalAssetRef(workOrder.getAsset().getExternalAssetRef());
+        } else {
+            type.setExternalAssetRef(""); // Set empty string if no asset
         }
         type.setDescription(workOrder.getDescription());
         type.setScheduledDate(workOrder.getScheduledDate());
