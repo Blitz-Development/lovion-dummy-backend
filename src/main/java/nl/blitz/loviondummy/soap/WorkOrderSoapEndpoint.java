@@ -39,18 +39,10 @@ public class WorkOrderSoapEndpoint {
         GetWorkOrdersResponse response = new GetWorkOrdersResponse();
         workOrders.stream().map(this::mapToType).forEach(response.getWorkOrders()::add);
 
-        // 👇 TESTDATA: expres foute workorders erbij plakken
-        response.getWorkOrders().add(
-                makeWorkOrderType(
-                        "INVALID-ID",
-                        "ASSET-1",
-                        "REPAIR",
-                        "Has valid desc",
-                        "LOW",
-                        "PENDING"
-                )
-        );          // fout: ID pattern
-        log.info("Added test workorder INVALID-ID, total now={}", response.getWorkOrders().size());
+        // Note: Database already contains work orders with validation issues seeded by DataInitializer
+        // This includes: invalid IDs, invalid types, short descriptions, past dates, etc.
+        // Additional test data can be added here if needed for specific scenarios
+        log.info("SOAP response: returning {} work orders", response.getWorkOrders().size());
         return response;
     }
 

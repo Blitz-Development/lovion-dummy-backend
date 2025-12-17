@@ -40,6 +40,12 @@ public class WorkOrder {
 
     private String description;
 
+    @Column(name = "validation_severity", length = 20)
+    private String validationSeverity;
+
+    @Column(name = "validation_errors", columnDefinition = "TEXT")
+    private String validationErrors;
+
     public Long getId() {
         return id;
     }
@@ -98,6 +104,22 @@ public class WorkOrder {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getValidationSeverity() {
+        return validationSeverity;
+    }
+
+    public void setValidationSeverity(String validationSeverity) {
+        this.validationSeverity = validationSeverity;
+    }
+
+    public String getValidationErrors() {
+        return validationErrors;
+    }
+
+    public void setValidationErrors(String validationErrors) {
+        this.validationErrors = validationErrors;
     }
 }
 
