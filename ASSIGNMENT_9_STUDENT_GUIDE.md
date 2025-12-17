@@ -4,6 +4,73 @@
 
 In this assignment, you'll implement **Advanced XSD Validation** in your .NET client. The backend now returns work orders that intentionally violate XSD constraints. Your job is to catch these violations BEFORE they cause deserialization errors.
 
+## The Core Concept
+
+The backend now returns work orders that **intentionally violate XSD constraints**. Students need to build a .NET client that:
+
+1. **Validates XML against XSD schemas BEFORE deserializing**
+2. **Catches validation errors and reports them**
+3. **Implements business rule validation on top of XSD validation**
+4. **Tracks validation issues in their database**
+
+## The Two-Tier Validation Approach
+
+```
+┌─────────────────────────────┐
+│ SOAP Response from Backend  │
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│  Tier 1: XSD Validation     │
+└──────┬──────────────┬───────┘
+       │              │
+       │ Valid XML    │ Invalid XML
+       │ Structure    │
+       ▼              ▼
+┌──────────────┐  ┌──────────────┐
+│ Deserialize  │  │ Log XSD      │
+│ to C# Objects│  │ Errors       │
+└──────┬───────┘  └──────┬───────┘
+       │                 │
+       ▼                 ▼
+┌──────────────────────────────┐
+│ Tier 2: Business Rule        │
+│ Validation                   │
+└──────┬──────────────┬────────┘
+       │              │
+       │ Valid        │ Invalid
+       │ Business     │ Business
+       │ Rules        │ Rules
+       ▼              ▼
+┌──────────────┐  ┌──────────────┐
+│ Save to      │  │ Log Business │
+│ Database     │  │ Warnings     │
+└──────┬───────┘  └──────┬───────┘
+       │                 │
+       ▼                 ▼
+┌──────────────┐  ┌──────────────┐
+│ WorkOrder    │  │ ImportError  │
+│ Table        │  │ Table        │
+└──────────────┘  └──────────────┘
+```
+
+## What the Backend Now Provides
+
+The backend returns work orders like these in the SOAP response:
+
+| Work Order ID | Issue | What's Wrong |
+|---------------|-------|--------------|
+| `WO-12345678` | ✅ Valid | Meets all constraints |
+| `INVALID-ID` | ❌ XSD Error | Doesn't match pattern `WO-\d{8}` |
+| `WO-87654321` | ❌ XSD Error | WorkType = "INVALID_TYPE" (not in enum) |
+| `WO-11111111` | ❌ XSD Error | Description = "Hi" (too short, min 5 chars) |
+| `WO-22222222` | ⚠️ Business Warning | Scheduled 5 days ago (past date) |
+| `WO-33333333` | ⚠️ Business Warning | URGENT priority but 15 days away |
+| `BAD` | ❌ Multiple Errors | Multiple constraint violations |
+
+**Total**: 11 work orders in the database (4 original + 7 with validation issues)
+
 ## Learning Objectives
 
 By completing this assignment, you will learn:
@@ -12,6 +79,26 @@ By completing this assignment, you will learn:
 - How to handle validation errors gracefully
 - How to create detailed validation reports
 - How to work with multi-file XSD schemas
+
+## Why This Matters: Real-World Scenario
+
+In production systems, external data sources often send invalid data:
+- Legacy systems with outdated validation
+- Manual data entry errors
+- Integration bugs
+- Schema mismatches between systems
+
+**Without proper validation**, your application will:
+- ❌ Crash on deserialization
+- ❌ Store corrupted data
+- ❌ Have no audit trail of failures
+- ❌ Be difficult to debug
+
+**With two-tier validation**, your application will:
+- ✅ Catch errors before they cause problems
+- ✅ Provide detailed error reports
+- ✅ Continue processing valid records
+- ✅ Maintain data quality
 
 ## Background: The Problem
 
@@ -425,28 +512,79 @@ public class ImportController : ControllerBase
 
 ## Testing Your Implementation
 
-### Test Case 1: Valid Work Order
-**Expected**: Should pass both XSD and business validation
+The backend provides 7 work orders with validation issues. Test your implementation against each one:
 
-### Test Case 2: Invalid ID Pattern
-**Work Order**: `INVALID-ID`
-**Expected**: XSD validation error - "does not match pattern WO-\d{8}"
+### Test Case 1: Valid Work Order ✅
+- **Work Order ID**: `WO-12345678`
+- **Description**: "Valid work order with proper format and all constraints met"
+- **Expected**: Should pass both XSD and business validation
+- **Result**: Imported successfully
 
-### Test Case 3: Invalid WorkType
-**Work Order**: `WO-87654321` with WorkType = "INVALID_TYPE"
-**Expected**: XSD validation error - "not a valid enumeration value"
+### Test Case 2: Invalid ID Pattern ❌
+- **Work Order ID**: `INVALID-ID`
+- **Issue**: Doesn't match pattern `WO-\d{8}`
+- **Expected**: XSD validation error
+- **Error Message**: "externalWorkOrderId does not match pattern WO-\\d{8}"
+- **Severity**: ERROR
+- **Result**: Should NOT be imported
 
-### Test Case 4: Too Short Description
-**Work Order**: `WO-11111111` with Description = "Hi"
-**Expected**: XSD validation error - "length must be at least 5"
+### Test Case 3: Invalid WorkType ❌
+- **Work Order ID**: `WO-87654321`
+- **Issue**: WorkType = "INVALID_TYPE" (not in enum)
+- **Expected**: XSD validation error
+- **Error Message**: "workType must be one of: MAINTENANCE, REPAIR, INSPECTION, INSTALLATION"
+- **Severity**: ERROR
+- **Result**: Should NOT be imported
 
-### Test Case 5: Past Date
-**Work Order**: `WO-22222222` scheduled 5 days ago
-**Expected**: Business rule warning - "scheduled in the past"
+### Test Case 4: Too Short Description ❌
+- **Work Order ID**: `WO-11111111`
+- **Issue**: Description = "Hi" (only 2 characters, min is 5)
+- **Expected**: XSD validation error
+- **Error Message**: "description must be at least 5 characters long"
+- **Severity**: ERROR
+- **Result**: Should NOT be imported
 
-### Test Case 6: High Priority Far Future
-**Work Order**: `WO-33333333` URGENT priority, 15 days away
-**Expected**: Business rule warning - "high priority should be within 7 days"
+### Test Case 5: Past Scheduled Date ⚠️
+- **Work Order ID**: `WO-22222222`
+- **Issue**: Scheduled 5 days ago
+- **Expected**: Business rule warning
+- **Error Message**: "scheduledDate is in the past"
+- **Severity**: WARNING
+- **Result**: Should be imported with warning logged
+
+### Test Case 6: High Priority Far Future ⚠️
+- **Work Order ID**: `WO-33333333`
+- **Issue**: URGENT priority but scheduled 15 days away
+- **Expected**: Business rule warning
+- **Error Message**: "URGENT priority work orders should be scheduled within 7 days"
+- **Severity**: WARNING
+- **Result**: Should be imported with warning logged
+
+### Test Case 7: Multiple Validation Errors ❌
+- **Work Order ID**: `BAD`
+- **Issues**: 
+  - Invalid ID pattern
+  - Invalid workType: "UNKNOWN"
+  - Invalid priority: "CRITICAL"
+  - Invalid status: "INVALID"
+  - Description too short: "Bad"
+  - Date in past (10 days ago)
+- **Expected**: Multiple XSD validation errors
+- **Error Message**: "Multiple errors: Invalid ID pattern, Invalid workType, Invalid priority, Invalid status, Description too short, Date in past"
+- **Severity**: ERROR
+- **Result**: Should NOT be imported
+
+### Expected Test Results Summary
+
+After running a full import, you should see:
+
+```
+Import Run Statistics:
+- Total Records: 11 (4 original + 7 test cases)
+- Success Count: 5 (4 original + 1 valid test case + 2 with warnings)
+- Error Count: 4 (invalid ID, invalid type, short description, multiple errors)
+- Warning Count: 2 (past date, high priority far future)
+```
 
 ## Deliverables
 
@@ -480,11 +618,29 @@ public class ImportController : ControllerBase
 ❌ **Don't**: Hard-code validation rules
 ✅ **Do**: Make rules configurable
 
+## Backend Validation Rules Reference
+
+The backend has 8 validation rules configured in the database:
+
+| Rule Name | Type | Expression | Severity |
+|-----------|------|------------|----------|
+| WorkOrder ID Pattern | XSD_PATTERN | `WO-\d{8}` | ERROR |
+| Description Minimum Length | XSD_RESTRICTION | minLength=5 | ERROR |
+| Description Maximum Length | XSD_RESTRICTION | maxLength=500 | ERROR |
+| WorkType Enumeration | XSD_ENUMERATION | MAINTENANCE\|REPAIR\|INSPECTION\|INSTALLATION | ERROR |
+| Priority Enumeration | XSD_ENUMERATION | LOW\|MEDIUM\|HIGH\|URGENT | ERROR |
+| Status Enumeration | XSD_ENUMERATION | PENDING\|SCHEDULED\|IN_PROGRESS\|COMPLETED\|CANCELLED | ERROR |
+| Scheduled Date Not In Past | BUSINESS_RULE | scheduledDate >= today | WARNING |
+| High Priority Within 7 Days | BUSINESS_RULE | priority=URGENT\|HIGH => scheduledDate <= today+7days | WARNING |
+
+You can view these rules in the backend's H2 console at `http://localhost:8080/h2-console` (table: `validation_rules`)
+
 ## Resources
 
 - [XmlSchemaSet Documentation](https://docs.microsoft.com/en-us/dotnet/api/system.xml.schema.xmlschemaset)
 - [XmlReader Validation](https://docs.microsoft.com/en-us/dotnet/standard/data/xml/xml-schema-xsd-validation-with-xmlschemaset)
 - Backend validation rules: Check `validation_rules` table in H2 console
+- Backend test data: Review `ASSIGNMENT_9_README.md` in the backend project
 
 ## Success Criteria
 
@@ -495,6 +651,50 @@ Your implementation is complete when:
 - ✅ Validation reports are accessible via API
 - ✅ Valid work orders are imported despite other errors
 - ✅ Tests cover all validation scenarios
+
+## Example: Complete Validation Flow
+
+Here's what should happen when you import work orders:
+
+```
+1. Call SOAP endpoint → Receive 11 work orders
+
+2. XSD Validation Phase:
+   ✅ WO-12345678 → Valid
+   ❌ INVALID-ID → Pattern violation
+   ❌ WO-87654321 → Invalid enum value
+   ❌ WO-11111111 → Description too short
+   ✅ WO-22222222 → Valid (XSD passed)
+   ✅ WO-33333333 → Valid (XSD passed)
+   ❌ BAD → Multiple violations
+   ✅ 4 original work orders → Valid
+
+3. Deserialize valid/warning records → 7 work orders
+
+4. Business Rule Validation Phase:
+   ✅ WO-12345678 → No issues
+   ⚠️ WO-22222222 → Past date warning
+   ⚠️ WO-33333333 → Priority/date mismatch warning
+   ✅ 4 original work orders → No issues
+
+5. Database Results:
+   - WorkOrder table: 7 records (5 clean + 2 with warnings)
+   - ImportError table: 6 error records + 2 warning records
+   - ImportRun: Success=7, Errors=4, Warnings=2
+
+6. Validation Report Available:
+   GET /api/imports/1/validation-report
+   {
+     "totalRecords": 11,
+     "successCount": 7,
+     "errorCount": 4,
+     "warningCount": 2,
+     "errors": {
+       "ERROR": [...4 XSD errors...],
+       "WARNING": [...2 business warnings...]
+     }
+   }
+```
 
 ## Questions?
 
