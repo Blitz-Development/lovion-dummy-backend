@@ -45,7 +45,7 @@ public class WsConfig extends WsConfigurerAdapter {
 
     @Bean
     public XsdSchema workOrdersSchema() {
-        return new SimpleXsdSchema(new ClassPathResource("wsdl/workorders.xsd"));
+        return new SimpleXsdSchema(new ClassPathResource("wsdl/xsd/integration-schema.xsd"));
     }
 
     @Bean

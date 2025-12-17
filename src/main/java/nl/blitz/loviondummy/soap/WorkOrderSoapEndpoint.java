@@ -16,6 +16,8 @@ import org.springframework.ws.server.endpoint.annotation.Endpoint;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
 import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
+import java.time.LocalDate;
+
 
 @Endpoint
 public class WorkOrderSoapEndpoint {
@@ -36,7 +38,19 @@ public class WorkOrderSoapEndpoint {
         List<WorkOrder> workOrders = workOrderService.getWorkOrders(request.getStatus(), null);
         GetWorkOrdersResponse response = new GetWorkOrdersResponse();
         workOrders.stream().map(this::mapToType).forEach(response.getWorkOrders()::add);
-        log.info("SOAP response: returning {} work orders", response.getWorkOrders().size());
+
+        // 👇 TESTDATA: expres foute workorders erbij plakken
+        response.getWorkOrders().add(
+                makeWorkOrderType(
+                        "INVALID-ID",
+                        "ASSET-1",
+                        "REPAIR",
+                        "Has valid desc",
+                        "LOW",
+                        "PENDING"
+                )
+        );          // fout: ID pattern
+        log.info("Added test workorder INVALID-ID, total now={}", response.getWorkOrders().size());
         return response;
     }
 
@@ -72,5 +86,25 @@ public class WorkOrderSoapEndpoint {
         type.setStatus(workOrder.getStatus());
         return type;
     }
+
+    private WorkOrderType makeWorkOrderType(
+            String externalId,
+            String assetRef,
+            String workType,
+            String description,
+            String priority,
+            String status
+    ) {
+        WorkOrderType t = new WorkOrderType();
+        t.setExternalWorkOrderId(externalId);
+        t.setExternalAssetRef(assetRef);   // laat deze ff altijd gevuld, voorkomt “required field” ellende
+        t.setWorkType(workType);
+        t.setDescription(description);
+        t.setPriority(priority);
+        t.setStatus(status);
+        t.setScheduledDate(LocalDate.now().plusDays(1));
+        return t;
+    }
+
 }
 

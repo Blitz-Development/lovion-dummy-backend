@@ -22,6 +22,6 @@ logging:
     nl.blitz.loviondummy: INFO
 
 server:
-  port: 8081
+  port: 8080
 
 
