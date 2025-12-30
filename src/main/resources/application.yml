@@ -24,4 +24,14 @@ logging:
 server:
   port: 8080
 
+soap:
+  fault:
+    simulation:
+      enabled: true          # simulatie AAN
+      probability: 0.2       # 40% kans dat een call een fault geeft
+    rate-limit:
+      max-requests: 5        # max 5 requests
+      window-seconds: 30     # per 30 seconden
+
+
 

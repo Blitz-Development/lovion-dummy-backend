@@ -17,6 +17,7 @@ import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
 import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
 import java.time.LocalDate;
+import nl.blitz.loviondummy.soap.SoapFaultException;
 
 
 @Endpoint
@@ -26,15 +27,28 @@ public class WorkOrderSoapEndpoint {
     private static final String NAMESPACE_URI = WsConfig.NAMESPACE_URI;
 
     private final WorkOrderQueryService workOrderService;
+    private final SoapFaultSimulator faultSimulator;
 
-    public WorkOrderSoapEndpoint(WorkOrderQueryService workOrderService) {
+    public WorkOrderSoapEndpoint(
+            WorkOrderQueryService workOrderService,
+            SoapFaultSimulator faultSimulator) {
         this.workOrderService = workOrderService;
+        this.faultSimulator = faultSimulator;
     }
+
 
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "GetWorkOrdersRequest")
     @ResponsePayload
-    public GetWorkOrdersResponse getWorkOrders(@RequestPayload GetWorkOrdersRequest request) {
+    public GetWorkOrdersResponse getWorkOrders(@RequestPayload GetWorkOrdersRequest request)
+            throws SoapFaultException {
+
         log.info("SOAP request: GetWorkOrders status={}", request.getStatus());
+
+        SoapFaultException fault = faultSimulator.simulateFault();
+        if (fault != null) {
+            throw fault;
+        }
+
         List<WorkOrder> workOrders = workOrderService.getWorkOrders(request.getStatus(), null);
         GetWorkOrdersResponse response = new GetWorkOrdersResponse();
         workOrders.stream().map(this::mapToType).forEach(response.getWorkOrders()::add);

@@ -11,11 +11,24 @@ import nl.blitz.loviondummy.soap.schema.GetWorkOrdersRequest;
 import nl.blitz.loviondummy.soap.schema.GetWorkOrdersResponse;
 import org.junit.jupiter.api.Test;
 
-class WorkOrderSoapEndpointTest {
+class WorkOrderSoapEndpointTest {SoapFaultSimulator simulator;
 
     @Test
-    void getWorkOrdersReturnsAtLeastOneOrder() {
-        WorkOrderSoapEndpoint endpoint = new WorkOrderSoapEndpoint(new StubWorkOrderService());
+    void getWorkOrdersReturnsAtLeastOneOrder() throws SoapFaultException{
+
+        SoapFaultSimulator simulator = new SoapFaultSimulator() {
+            @Override
+            public SoapFaultException simulateFault() {
+                return null;
+            }
+        };
+
+        WorkOrderSoapEndpoint endpoint =
+                new WorkOrderSoapEndpoint(
+                        new StubWorkOrderService(),
+                        simulator
+                );
+
         GetWorkOrdersRequest request = new GetWorkOrdersRequest();
 
         GetWorkOrdersResponse response = endpoint.getWorkOrders(request);
